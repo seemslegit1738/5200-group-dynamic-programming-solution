@@ -1,0 +1,37 @@
+State:
+	ts[t] = best choice of task at time t
+Choices:
+	task at time t
+Transition/recurrence:
+	for each task:
+		- is it available/able to be executed late?
+		- recurse on choice of task
+Base case:
+	- No more tasks available to be chosen: All tasks are either
+		- already chosen
+		- past deadline (no dependencies)
+		- all dependencies all past deadline
+			- recursive chain to examine dependency list?
+Evaluation order:
+	Memoization vs tabulation
+	- Memoization:
+		- Pros:
+			- mirrors mathematical recurrence
+			- computes only reachable states
+		- Costs:
+			- hash/array lookup + recursion stack
+			- may hit recursion-depth limits
+	- Tabulation:
+		- Pros:
+			- no recursion overhead
+			- memory layout preditable + cache-friendly
+		- Costs:
+			- may compute extra states
+
+	Decision: Memoization
+	- easy to implement recursive function directly from logic
+	- reconstructing solution can be done by referencing earlier method from past homework
+
+Questions:
+- How is a bitmask involved?
+	- Is this the output?
