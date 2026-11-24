@@ -18,8 +18,12 @@ class Task {
 		Task();
 		// == Helper function: determines when two tasks are equivalent (via unique ID)
 		bool operator==(const Task & n);
-		// determines whether task can be chosen (including dependencies)
-		bool is_option(int time) const;
+		/*
+ 			Determines whether or not a task can be chosen
+				- If the total duration of the task and its dependencies + the current time exceeds the deadline, is_option returns -1.
+				- Otherwise, it returns the total duration of the task and its dependencies + the time that was passed in.
+		*/
+		int is_option(int time, std::vector<Task> const task_list) const;
 		// helper function for is_option
 		std::tuple<std::vector<std::string>, int> time_helper(std::tuple<std::vector<std::string>, int> tasks_and_time) const;
 		// TODO: Document function once finished
