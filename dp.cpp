@@ -21,14 +21,12 @@ std::tuple<std::vector<std::string>, int> Task::time_helper(std::tuple<std::vect
 		temp_tasks_and_time = dependency.time_helper(tasks_and_time);
 
 		// sync current task list with temporary task list from recursive call
-		if (!temp_id_list->empty()) {
-			for (std::string id : *temp_id_list) {
-				auto it = std::find(task_id_list->begin(), task_id_list->end(), id);
-				if (it == task_id_list->end())
-					task_id_list->erase(it);
-			}
-
+		for (std::string id : *task_id_list) {
+			auto it = std::find(temp_id_list->begin(), temp_id_list->end(), id);
+			if (it == temp_id_list->end())
+				task_id_list->erase(it);
 		}
+
 		*current_time += *temp_time;
 	}
 	// update task list and time for current task
