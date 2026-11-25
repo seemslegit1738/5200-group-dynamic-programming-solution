@@ -6,7 +6,6 @@
 class Task {
 	int duration;
 	int deadline;
-	int reward;
 	// Choice: either store dependencies by ID or by pointer to memory location
 	// Currently stores stock dependency objects, but may require vector of pointers. Would need adjustment to method access in functions
 	std::vector<Task> dependencies;
@@ -14,6 +13,7 @@ class Task {
 	public:
 		// ID unique to each task
 		std::string taskid;
+		int reward;
 		// TODO: create constructor definition
 		Task();
 		// == Helper function: determines when two tasks are equivalent (via unique ID)
@@ -27,7 +27,7 @@ class Task {
 		// helper function for is_option
 		std::tuple<std::vector<std::string>, int> time_helper(std::tuple<std::vector<std::string>, int> tasks_and_time) const;
 		// calculates order to execute dependencies in such that their total reward is maximized; different from dynamic_schedule in that dependencies both eligible and ineligible for reward must all be executed.
-		std::tuple<int, int, std::vector<Task>> maximize_dependency_reward(int time, int reward, std::vector<Task>choosable_dependencies);
+		std::tuple<int, int, std::vector<Task>> maximize_dependency_reward(int time, int reward, std::vector<Task> task_list);
 };
 
 // recursive, main dynamically programmed function

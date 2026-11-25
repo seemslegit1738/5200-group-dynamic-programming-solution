@@ -56,31 +56,26 @@ std::tuple<std::vector<std::string>, int> Task::is_option(int time, std::vector<
 	return tasks_and_time;
 }
 
-std::tuple<int, int, std::vector<Task>> Task::maximize_dependency_reward(int time, int reward, std::vector<Task> choosable_dependencies) {
-	// create tuple of passed-in function args
-	std::tuple<int, int, std::vector<Task>> args = {time, reward, choosable_dependencies};
-	if (choosable_dependencies.size() > 1) {
-		// determines which dependencies are still before their deadline. Dependencies that are not are indiscriminately executed last.
-		std::vector<Task> depchoices = {};
-		std::vector<Task> chooselast = {};
+std::tuple<int, int, std::vector<Task>> Task::maximize_dependency_reward(int time, int reward, std::vector<Task> task_list) {
+	// determine intersection between task's own dependencies and tasks not already executed
+	std::vector<Task> task_list_intersect = {};
+	for (auto task : task_list) {
+		if (std::find(dependencies.begin(), dependencies.end(), task) != dependencies.end())
+			task_list_intersect.push_back(task);
+	}
+	if (task_list_intersect.size() > 1) {
 		int total_time = time;
-		// TODO: Fix this to account for the calling Task's own dependencies, excluding any missing from the list (already executed)
-		for (auto dependency : choosable_dependencies) {
-			if (std::get<1>(dependency.is_option(time, choosable_dependencies)) != -1)
-				depchoices.push_back(dependency);
-			else
-				chooselast.push_back(dependency);
-		}
 		std::vector<std::tuple<int, int, std::vector<Task>>> results = {};
 		int i = 0;
-		for (auto dep : depchoices) {
-			std::vector<Task> depchoices_copy = depchoices;
-			depchoices_copy.erase(std::find(depchoices_copy.begin(), depchoices_copy.end(), dep));
-			auto result = maximize_dependency_reward(time + dep.duration, reward + dep.reward, depchoices_copy);
+		for (auto dep : task_list_intersect) {
+			std::vector<Task> task_list_copy = task_list_intersect;
+			task_list_copy.erase(std::find(task_list_copy.begin(), task_list_copy.end(), dep));
+			auto result = maximize_dependency_reward(time + dep.duration, reward + dep.reward, task_list_copy);
 			results.at(i) = result;
 			i++;
 		}
 		// return maximum reward
+		// TODO: Ensure that recursive logic + calculation of reward and time takes into account ALL dependencies
 		std::vector<int> rewards;
 		for (auto res : results) {
 			rewards.push_back(std::get<1>(res));
@@ -89,20 +84,24 @@ std::tuple<int, int, std::vector<Task>> Task::maximize_dependency_reward(int tim
 		int total_reward = rewards.at(rewards.size() - 1);
 		// time will be the same no matter the order
 		total_time += std::get<0>(results.at(0));
-		for (auto dep : chooselast)
-			total_time += dep.duration;
-		// TODO: remove from choosable_dependencies all dependencies that have been chosen.
-		return {total_time, total_reward, choosable_dependencies};
+		// create tuple of passed-in function args
+		// all elements of results should contain the same list, as all solutions will execute all dependencies.
+		// TODO: return total task list - tasks chosen, rather than the result of the intersection.
+		std::tuple<int, int, std::vector<Task>> args = {time, reward, std::get<2>(results.at(0))};
+		return {total_time, total_reward, std::get<2>(results.at(0))};
 
 	} else if (dependencies.size() == 1) {
-		// TODO: Perhaps at the beginning of the function, create a vector that is the intersection between the choosable dependencies and the dependencies of the current Task. Reworking this function with that should make things much easier.
-		// Then, make sure to fix how choosable_dependencies is passed into the return statement.
-		
-		if (std::get<1>(dependencies.at(0).is_option(time, choosable_dependencies)) != -1)
-			return {time + dependencies.at(0).duration, reward + dependencies.at(0).reward, choosable_dependencies};
-		return {time + dependencies.at(0).duration, reward, choosable_dependencies};
+		Task dep = dependencies.at(0);
+		if (std::find(task_list_intersect.begin(), task_list_intersect.end(), dep) != task_list_intersect.end()) {
+			if (std::get<1>(dep.is_option(time, task_list))) {
+				// TODO: Replace task_list with task_list - self (in both return statements)
+				return {time + dep.duration, reward + dep.reward, task_list};
+			} else {
+				return {time + dep.duration, reward, task_list};
+			}
+		}
 	}
-	return args;
+	return {time, reward, task_list};
 }
 
 int dynamic_schedule(std::vector<Task> const & task_list, int time) {
@@ -114,19 +113,24 @@ int dynamic_schedule(std::vector<Task> const & task_list, int time) {
 	for (int i = 0; i < task_list.size(); i++) {
 		auto tasks_and_time = task_list.at(i).is_option(time, task_list);
 		if (std::get<1>(tasks_and_time) == -1) {
+			// do not remove ineligible task from the list, in case it is a dependency.
+			rewards.at(i) = -1;
 			continue;
 		}
 		// create copy of task list, excluding options
+		// copying from task_list is necessary because is_option only returns a list of ids, not Task objects.
 		for (std::string id : std::get<0>(tasks_and_time)) {
 			for (int j = 0; j < task_list.size(); j++) {
 				if (task_list.at(j).taskid == id)
 					task_list_copy.push_back(task_list.at(j));
 			}
 		}
-		rewards.at(i) += dynamic_schedule(task_list_copy, std::get<1>(tasks_and_time));
+		rewards.at(i) = dynamic_schedule(task_list_copy, std::get<1>(tasks_and_time));
+		// TODO: incorporate total rewards of dependencies (in optimal order) using helper function
+		rewards.at(i) += task_list.at(i).reward;
 		
 	}
-	std::sort(rewards.begin(), rewards.end());
 	// return greatest reward
+	std::sort(rewards.begin(), rewards.end());
 	return rewards.at(rewards.size() - 1);
 }
