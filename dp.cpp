@@ -30,13 +30,18 @@ std::tuple<std::vector<std::string>, int> Task::time_helper(std::tuple<std::vect
 		*current_time += *temp_time;
 	}
 	// update task list and time for current task
-	task_id_list->erase(std::find(task_id_list->begin(), task_id_list->end(), taskid));
+	auto it = std::find(task_id_list->begin(), task_id_list->end(), taskid);
+	// ensure that the current task id exists in the list: if not, skip without adding its duration.
+	if (it != task_id_list->end())
+		task_id_list->erase(it);
+	else
+		return tasks_and_time;
 	*current_time += duration;
 
 	return tasks_and_time;
 }
 
-int Task::is_option(int time, std::vector<Task> const task_list) const {
+std::tuple<std::vector<std::string>, int> Task::is_option(int time, std::vector<Task> const task_list) const {
 	// initialize recursive state
 	std::tuple<std::vector<std::string>, int> tasks_and_time = {{}, time};
 	for (int i = 0; i < task_list.size(); i++) {
@@ -44,54 +49,33 @@ int Task::is_option(int time, std::vector<Task> const task_list) const {
 	}
 	// get total time of dependencies
 	tasks_and_time = time_helper(tasks_and_time);
-	time = std::get<1>(tasks_and_time);
 
-	if (time > deadline)
-		return -1;
+	if (std::get<1>(tasks_and_time) > deadline)
+		return {{}, -1};
 	
-	return time;
-}
-
-std::tuple<std::vector<std::string>, int> Task::track_dependencies(std::vector<Task> const & task_list, int time) const {
-	// tuple index 0: id of chosen tasks
-	// tuple index 1: total reward
-	std::tuple<std::vector<std::string>, int> final{{taskid}, 0};
-	std::tuple<std::vector<std::string>, int> temp = {{}, 0};
-	// TODO: create deep copy of and modify task list to prevent the same dependency being chosen twice. Ensure change is made before recursive call is made.
-	if (is_option(time, task_list)) {
-		std::get<1>(final) += reward;
-	}
-	for (auto dependency : dependencies) {
-		// if dependency not found in current task list, it must already have been chosen.
-		if (std::find(task_list.begin(), task_list.end(), dependency) == task_list.end())
-			continue;
-
-		temp = dependency.track_dependencies(task_list, time);
-		// append dependencies chosen from recursive call to final task list
-		if (!std::get<0>(temp).empty()) {
-			std::get<0>(final).insert(std::get<0>(final).end(), std::get<0>(temp).begin(), std::get<0>(temp).end());
-		}
-		std::get<1>(final) += std::get<1>(temp);
-	}
-	return final;
+	return tasks_and_time;
 }
 
 int dynamic_schedule(std::vector<Task> const & task_list, int time) {
-	// incorporate memo table
+	// TODO: incorporate memo table
+
 	// iterate through tasks, determining which can be chosen
 	std::vector<int> rewards = {};
 	std::vector<Task> task_list_copy = {};
 	for (int i = 0; i < task_list.size(); i++) {
-		// TODO: Possibly rethink is_option usage due to updated recursion of dependencies
-		if (task_list.at(i).is_option(time, task_list)) {
+		auto tasks_and_time = task_list.at(i).is_option(time, task_list);
+		if (std::get<1>(tasks_and_time) != -1) {
 			// create copy of task list, excluding options
-			// TODO: incorporate dependencies into choice, reward and task_list removal
-			task_list_copy = task_list;
-			// TODO: insert loop to remove chosen tasks this path from task list copy
-			// TODO: ensure that time is correctly incremented based on chosen task(s) for each choice
-			rewards.at(i) = dynamic_schedule(task_list_copy, time++);
+			for (std::string id : std::get<0>(tasks_and_time)) {
+				for (int j = 0; j < task_list.size(); j++) {
+					if (task_list.at(j).taskid == id)
+						task_list_copy.push_back(task_list.at(j));
+				}
+			}
+			rewards.at(i) = dynamic_schedule(task_list_copy, std::get<1>(tasks_and_time));
 		}
 	}
 	std::sort(rewards.begin(), rewards.end());
+	// return greatest reward
 	return rewards.at(rewards.size() - 1);
 }
