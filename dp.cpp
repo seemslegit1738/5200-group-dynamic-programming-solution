@@ -76,28 +76,32 @@ std::tuple<int, int, std::vector<Task>> Task::maximize_dependency_reward(int tim
 		}
 		// return maximum reward
 		// TODO: Ensure that recursive logic + calculation of reward and time takes into account ALL dependencies
-		std::vector<int> rewards;
-		for (auto res : results) {
-			rewards.push_back(std::get<1>(res));
-		}
-		std::sort(rewards.begin(), rewards.end());
-		int total_reward = rewards.at(rewards.size() - 1);
+		std::sort(results.begin(), results.end(), [](const auto &a, const auto &b) { return std::get<1>(a) < std::get<1>(b); });
+		int total_reward = std::get<1>(results.at(results.size() - 1));
 		// time will be the same no matter the order
 		total_time += std::get<0>(results.at(0));
 		// create tuple of passed-in function args
 		// all elements of results should contain the same list, as all solutions will execute all dependencies.
 		// TODO: return total task list - tasks chosen, rather than the result of the intersection.
+		std::vector<Task> omitted_chosen = task_list;
+		std::vector<Task> *winning_list = &std::get<2>(results.at(results.size() - 1));
+		for (auto task : task_list_intersect) {
+			if ((std::find(task_list_intersect.begin(), task_list_intersect.end(), task) != task_list_intersect.end()) && (std::find(winning_list->begin(), winning_list->end(), task) == winning_list->end()))
+				omitted_chosen.erase(std::find(omitted_chosen.begin(), omitted_chosen.end(), task));
+		}
 		std::tuple<int, int, std::vector<Task>> args = {time, reward, std::get<2>(results.at(0))};
 		return {total_time, total_reward, std::get<2>(results.at(0))};
 
 	} else if (dependencies.size() == 1) {
 		Task dep = dependencies.at(0);
 		if (std::find(task_list_intersect.begin(), task_list_intersect.end(), dep) != task_list_intersect.end()) {
-			if (std::get<1>(dep.is_option(time, task_list))) {
-				// TODO: Replace task_list with task_list - self (in both return statements)
-				return {time + dep.duration, reward + dep.reward, task_list};
+			// remove singular dependency from task list
+			std::vector<Task> task_list_copy = task_list;
+			task_list_copy.erase(std::find(task_list_copy.begin(), task_list_copy.end(), dep));
+			if (std::get<1>(dep.is_option(time, task_list)) != -1) {
+				return {time + dep.duration, reward + dep.reward, task_list_copy};
 			} else {
-				return {time + dep.duration, reward, task_list};
+				return {time + dep.duration, reward, task_list_copy};
 			}
 		}
 	}
