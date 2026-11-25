@@ -47,7 +47,7 @@ std::tuple<std::vector<std::string>, int> Task::is_option(int time, std::vector<
 	for (int i = 0; i < task_list.size(); i++) {
 		std::get<0>(tasks_and_time).push_back(task_list.at(i).taskid);
 	}
-	// get total time of dependencies
+	// get total time of dependencies + self
 	tasks_and_time = time_helper(tasks_and_time);
 
 	if (std::get<1>(tasks_and_time) > deadline)
@@ -68,9 +68,14 @@ std::tuple<int, int, std::vector<Task>> Task::maximize_dependency_reward(int tim
 		std::vector<std::tuple<int, int, std::vector<Task>>> results = {};
 		int i = 0;
 		for (auto dep : task_list_intersect) {
+			// TODO: Check for whether or not dep is an option within loop
 			std::vector<Task> task_list_copy = task_list_intersect;
 			task_list_copy.erase(std::find(task_list_copy.begin(), task_list_copy.end(), dep));
-			auto result = maximize_dependency_reward(time + dep.duration, reward + dep.reward, task_list_copy);
+			std::tuple<int, int, std::vector<Task>> result;
+			if (std::get<1>(dep.is_option(time, task_list)) != -1)
+				result = dep.maximize_dependency_reward(time + dep.duration, reward + dep.reward, task_list_copy);
+			else
+				result = dep.maximize_dependency_reward(time + dep.duration, reward, task_list_copy);
 			results.at(i) = result;
 			i++;
 		}
@@ -82,7 +87,6 @@ std::tuple<int, int, std::vector<Task>> Task::maximize_dependency_reward(int tim
 		total_time += std::get<0>(results.at(0));
 		// create tuple of passed-in function args
 		// all elements of results should contain the same list, as all solutions will execute all dependencies.
-		// TODO: return total task list - tasks chosen, rather than the result of the intersection.
 		std::vector<Task> omitted_chosen = task_list;
 		std::vector<Task> *winning_list = &std::get<2>(results.at(results.size() - 1));
 		for (auto task : task_list_intersect) {
