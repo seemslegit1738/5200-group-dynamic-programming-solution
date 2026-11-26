@@ -4,7 +4,7 @@
 Task::Task(std::string taskid, int duration, int deadline, int reward, std::vector<Task*> dependencies)
 	: taskid(taskid), duration(duration), deadline(deadline), taskreward(reward), dependencies(dependencies) {}
 
-bool Task::operator==(const Task & n) { return taskid == n.taskid; }
+bool Task::operator==(const Task & n) const { return taskid == n.taskid; }
 
 std::tuple<std::vector<std::string>, int> Task::time_helper(std::tuple<std::vector<std::string>, int> tasks_and_time) const {
 	// create pointers to task id list and current time value for better readability
@@ -24,7 +24,7 @@ std::tuple<std::vector<std::string>, int> Task::time_helper(std::tuple<std::vect
 		temp_tasks_and_time = dependency->time_helper(tasks_and_time);
 
 		// sync current task list with temporary task list from recursive call
-		auto k = task_id_list->size();
+		int k = task_id_list->size();
 		for (int i = 0; i < k; i++) {
 			auto it = std::find(temp_id_list->begin(), temp_id_list->end(), task_id_list->at(i));
 			if (it == temp_id_list->end()) {
@@ -50,15 +50,15 @@ std::tuple<std::vector<std::string>, int> Task::time_helper(std::tuple<std::vect
 
 std::tuple<std::vector<std::string>, int> Task::is_option(int time, std::vector<Task> const task_list) const {
 	// initialize recursive state
-	std::tuple<std::vector<std::string>, int> tasks_and_time = {{}, time};
-	for (int i = 0; i < task_list.size(); i++) {
+	std::tuple<std::vector<std::string>, int> tasks_and_time = {std::vector<std::string>{}, time};
+	for (int i = 0; i < static_cast<int>(task_list.size()); i++) {
 		std::get<0>(tasks_and_time).push_back(task_list.at(i).taskid);
 	}
 	// get total time of dependencies + self
 	tasks_and_time = time_helper(tasks_and_time);
 
 	if (std::get<1>(tasks_and_time) > deadline)
-		return {{}, -1};
+		return {std::vector<std::string>{}, -1};
 	
 	return tasks_and_time;
 }
@@ -105,7 +105,7 @@ std::tuple<int, int, std::vector<Task>> Task::maximize_dependency_reward(int tim
 				if (std::find(result2_list->begin(), result2_list->end(), task) == result2_list->end())
 					result2_choices.push_back(task);
 			}
-			auto k = result_list->size();
+			int k = result_list->size();
 			for (int j = 0; j < k; j++) {
 				if (std::find(result2_choices.begin(), result2_choices.end(), result_list->at(j)) != result2_choices.end()) {
 					result_list->erase(result_list->begin() + j);
@@ -133,7 +133,7 @@ int dynamic_schedule(std::vector<Task> const & task_list, int time) {
 	std::vector<int> rewards = {};
 	std::vector<Task> task_list_copy = {};
 	// iterate through tasks, determining which can be chosen
-	for (int i = 0; i < task_list.size(); i++) {
+	for (int i = 0; i < static_cast<int>(task_list.size()); i++) {
 		auto tasks_and_time = task_list.at(i).is_option(time, task_list);
 		if (std::get<1>(tasks_and_time) == -1) {
 			// do not remove ineligible task from the list, in case it is a dependency.
@@ -143,7 +143,7 @@ int dynamic_schedule(std::vector<Task> const & task_list, int time) {
 		// create copy of task list, excluding options
 		// copying from task_list is necessary because is_option only returns a list of ids, not Task objects.
 		for (std::string id : std::get<0>(tasks_and_time)) {
-			for (int j = 0; j < task_list.size(); j++) {
+			for (int j = 0; j < static_cast<int>(task_list.size()); j++) {
 				if (task_list.at(j).taskid == id)
 					task_list_copy.push_back(task_list.at(j));
 			}
