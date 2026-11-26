@@ -8,7 +8,7 @@ std::tuple<std::vector<std::string>, int> Task::time_helper(std::tuple<std::vect
 	std::vector<std::string>* task_id_list = &std::get<0>(tasks_and_time);
 	int* current_time = &std::get<1>(tasks_and_time);
 
-	// if dependency not in task list (already accounted for), do not add its duration to total time
+	// if task not in task list (already accounted for), do not add its duration to total time
 	if (std::find(task_id_list->begin(), task_id_list->end(), taskid) == task_id_list->end())
 		return tasks_and_time;
 
@@ -21,10 +21,14 @@ std::tuple<std::vector<std::string>, int> Task::time_helper(std::tuple<std::vect
 		temp_tasks_and_time = dependency.time_helper(tasks_and_time);
 
 		// sync current task list with temporary task list from recursive call
-		for (std::string id : *task_id_list) {
-			auto it = std::find(temp_id_list->begin(), temp_id_list->end(), id);
-			if (it == temp_id_list->end())
-				task_id_list->erase(it);
+		auto k = task_id_list->size();
+		for (int i = 0; i < k; i++) {
+			auto it = std::find(temp_id_list->begin(), temp_id_list->end(), task_id_list->at(i));
+			if (it == temp_id_list->end()) {
+				task_id_list->erase(task_id_list->begin() + i);
+				i--;
+				k--;
+			}
 		}
 
 		*current_time += *temp_time;
@@ -56,14 +60,14 @@ std::tuple<std::vector<std::string>, int> Task::is_option(int time, std::vector<
 	return tasks_and_time;
 }
 
-std::tuple<int, int, std::vector<Task>> Task::maximize_dependency_reward(int time, int reward, std::vector<Task> task_list) {
+std::tuple<int, int, std::vector<Task>> Task::maximize_dependency_reward(int time, int reward, std::vector<Task> task_list) const {
 	// determine intersection between task's own dependencies and tasks not already executed
 	std::vector<Task> task_list_intersect = {};
 	for (auto task : task_list) {
 		if (std::find(dependencies.begin(), dependencies.end(), task) != dependencies.end())
 			task_list_intersect.push_back(task);
 	}
-	if (task_list_intersect.size() > 0) {
+	if (!(task_list_intersect.empty())) {
 		int total_time = time;
 		std::vector<std::tuple<int, int, std::vector<Task>>> results = {};
 		int i = 0;
@@ -73,7 +77,7 @@ std::tuple<int, int, std::vector<Task>> Task::maximize_dependency_reward(int tim
 			task_list_copy.erase(std::find(task_list_copy.begin(), task_list_copy.end(), dep));
 			std::tuple<int, int, std::vector<Task>> result;
 			bool doigetreward = std::get<1>(dep.is_option(time, task_list)) != -1;
-			if (doigetreward) 
+			if (doigetreward)
 				result = dep.maximize_dependency_reward(time + dep.duration, reward + dep.taskreward, task_list_copy);
 			else
 				result = dep.maximize_dependency_reward(time + dep.duration, reward, task_list_copy);
@@ -83,7 +87,7 @@ std::tuple<int, int, std::vector<Task>> Task::maximize_dependency_reward(int tim
 			task_list_copy.erase(std::find(task_list_copy.begin(), task_list_copy.end(), dep));
 			std::tuple<int, int, std::vector<Task>> result2;
 			std::vector<Task> *result_list = &std::get<2>(result);
-			// create difference between dependency list and result list
+			// create intersection between dependency list and resulting list
 			for (Task task : task_list_intersect) {
 				if (std::find(result_list->begin(), result_list->end(), task) == result_list->end())
 					task_list_copy2.erase(std::find(task_list_copy2.begin(), task_list_copy2.end(), task));
@@ -98,11 +102,13 @@ std::tuple<int, int, std::vector<Task>> Task::maximize_dependency_reward(int tim
 				if (std::find(result2_list->begin(), result2_list->end(), task) == result2_list->end())
 					result2_choices.push_back(task);
 			}
-			for (Task task : *result_list) {
-				if (std::find(result2_choices.begin(), result2_choices.end(), task) != result2_choices.end())
-					// TODO: Make erasure during loop safe
-					// perhaps write helper function?
-					result_list->erase(std::find(result_list->begin(), result_list->end(), task));
+			auto k = result_list->size();
+			for (int j = 0; j < k; j++) {
+				if (std::find(result2_choices.begin(), result2_choices.end(), result_list->at(j)) != result2_choices.end()) {
+					result_list->erase(result_list->begin() + j);
+					j--;
+					k--;
+				}
 			}
 			i++;
 		}
@@ -113,13 +119,6 @@ std::tuple<int, int, std::vector<Task>> Task::maximize_dependency_reward(int tim
 		total_time += std::get<0>(results.at(0));
 		// create tuple of passed-in function args
 		// all elements of results should contain the same list, as all solutions will execute all dependencies.
-		std::vector<Task> omitted_chosen = task_list;
-		std::vector<Task> *winning_list = &std::get<2>(results.at(results.size() - 1));
-		for (auto task : task_list_intersect) {
-			if ((std::find(task_list_intersect.begin(), task_list_intersect.end(), task) != task_list_intersect.end()) && (std::find(winning_list->begin(), winning_list->end(), task) == winning_list->end()))
-				omitted_chosen.erase(std::find(omitted_chosen.begin(), omitted_chosen.end(), task));
-		}
-		std::tuple<int, int, std::vector<Task>> args = {time, reward, std::get<2>(results.at(0))};
 		return {total_time, total_reward, std::get<2>(results.at(0))};
 	}
 	return {time, reward, task_list};
@@ -147,8 +146,8 @@ int dynamic_schedule(std::vector<Task> const & task_list, int time) {
 			}
 		}
 		rewards.at(i) = dynamic_schedule(task_list_copy, std::get<1>(tasks_and_time));
-		// TODO: incorporate total rewards of dependencies (in optimal order) using maximize function
-		rewards.at(i) += task_list.at(i).taskreward;
+		auto dep_results = task_list.at(i).maximize_dependency_reward(time, 0, task_list);
+		rewards.at(i) += task_list.at(i).taskreward + std::get<1>(dep_results);
 		
 	}
 	// return greatest reward
