@@ -1,6 +1,9 @@
 #include "dp.h"
 #include <algorithm>
 
+Task::Task(std::string taskid, int duration, int deadline, int reward, std::vector<Task*> dependencies)
+	: taskid(taskid), duration(duration), deadline(deadline), taskreward(reward), dependencies(dependencies) {}
+
 bool Task::operator==(const Task & n) { return taskid == n.taskid; }
 
 std::tuple<std::vector<std::string>, int> Task::time_helper(std::tuple<std::vector<std::string>, int> tasks_and_time) const {
@@ -18,7 +21,7 @@ std::tuple<std::vector<std::string>, int> Task::time_helper(std::tuple<std::vect
 
 	// recursively iterate through all dependencies of current task.
 	for (auto dependency : dependencies) {
-		temp_tasks_and_time = dependency.time_helper(tasks_and_time);
+		temp_tasks_and_time = dependency->time_helper(tasks_and_time);
 
 		// sync current task list with temporary task list from recursive call
 		auto k = task_id_list->size();

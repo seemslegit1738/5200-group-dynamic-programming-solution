@@ -8,14 +8,14 @@ class Task {
 	int deadline;
 	// Choice: either store dependencies by ID or by pointer to memory location
 	// Currently stores stock dependency objects, but may require vector of pointers. Would need adjustment to method access in functions
-	std::vector<Task> dependencies;
+	std::vector<Task*> dependencies;
 
 	public:
 		// ID unique to each task
 		std::string taskid;
 		int taskreward;
 		// TODO: create constructor definition
-		Task();
+		Task(std::string taskid, int duration, int deadline, int reward, std::vector<Task*> dependencies);
 		// == Helper function: determines when two tasks are equivalent (via unique ID)
 		bool operator==(const Task & n);
 		/*
