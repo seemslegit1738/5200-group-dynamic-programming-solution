@@ -68,19 +68,34 @@ std::tuple<int, int, std::vector<Task>> Task::maximize_dependency_reward(int tim
 		std::vector<std::tuple<int, int, std::vector<Task>>> results = {};
 		int i = 0;
 		for (auto dep : task_list_intersect) {
-			// TODO: Check for whether or not dep is an option within loop
-			std::vector<Task> task_list_copy = task_list_intersect;
+			// calculate value of current dependency when put first
+			std::vector<Task> task_list_copy = task_list;
 			task_list_copy.erase(std::find(task_list_copy.begin(), task_list_copy.end(), dep));
 			std::tuple<int, int, std::vector<Task>> result;
-			if (std::get<1>(dep.is_option(time, task_list)) != -1)
-				result = dep.maximize_dependency_reward(time + dep.duration, reward + dep.reward, task_list_copy);
+			bool doigetreward = std::get<1>(dep.is_option(time, task_list)) != -1;
+			if (doigetreward) 
+				result = dep.maximize_dependency_reward(time + dep.duration, reward + dep.taskreward, task_list_copy);
 			else
 				result = dep.maximize_dependency_reward(time + dep.duration, reward, task_list_copy);
 			results.at(i) = result;
+			// calculate value of other dependencies
+			std::vector<Task> task_list_copy2 = task_list_intersect;
+			task_list_copy.erase(std::find(task_list_copy.begin(), task_list_copy.end(), dep));
+			std::tuple<int, int, std::vector<Task>> result2;
+			std::vector<Task> *result_list = &std::get<2>(result);
+			// create difference between dependency list and result list
+			for (Task task : task_list_intersect) {
+				if (std::find(result_list->begin(), result_list->end(), task) == result_list->end())
+					task_list_copy2.erase(std::find(task_list_copy2.begin(), task_list_copy2.end(), task));
+			}
+			result2 = maximize_dependency_reward(std::get<0>(result), std::get<1>(result), task_list_copy2);
+			// combine values
+			std::get<0>(results.at(i)) += std::get<0>(result2);
+			std::get<1>(results.at(i)) += std::get<1>(result2);
+			// TODO: Figure out how to conduct list difference between results.at(i) and results2
 			i++;
 		}
 		// return maximum reward
-		// TODO: Ensure that recursive logic + calculation of reward and time takes into account ALL dependencies
 		std::sort(results.begin(), results.end(), [](const auto &a, const auto &b) { return std::get<1>(a) < std::get<1>(b); });
 		int total_reward = std::get<1>(results.at(results.size() - 1));
 		// time will be the same no matter the order
@@ -103,7 +118,7 @@ std::tuple<int, int, std::vector<Task>> Task::maximize_dependency_reward(int tim
 			std::vector<Task> task_list_copy = task_list;
 			task_list_copy.erase(std::find(task_list_copy.begin(), task_list_copy.end(), dep));
 			if (std::get<1>(dep.is_option(time, task_list)) != -1) {
-				return {time + dep.duration, reward + dep.reward, task_list_copy};
+				return {time + dep.duration, reward + dep.taskreward, task_list_copy};
 			} else {
 				return {time + dep.duration, reward, task_list_copy};
 			}

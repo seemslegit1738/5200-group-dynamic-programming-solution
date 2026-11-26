@@ -13,7 +13,7 @@ class Task {
 	public:
 		// ID unique to each task
 		std::string taskid;
-		int reward;
+		int taskreward;
 		// TODO: create constructor definition
 		Task();
 		// == Helper function: determines when two tasks are equivalent (via unique ID)
