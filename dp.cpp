@@ -92,7 +92,18 @@ std::tuple<int, int, std::vector<Task>> Task::maximize_dependency_reward(int tim
 			// combine values
 			std::get<0>(results.at(i)) += std::get<0>(result2);
 			std::get<1>(results.at(i)) += std::get<1>(result2);
-			// TODO: Figure out how to conduct list difference between results.at(i) and results2
+			std::vector<Task> result2_choices = {};
+			std::vector<Task> *result2_list = &std::get<2>(result2);
+			for (Task task : task_list_copy2) {
+				if (std::find(result2_list->begin(), result2_list->end(), task) == result2_list->end())
+					result2_choices.push_back(task);
+			}
+			for (Task task : *result_list) {
+				if (std::find(result2_choices.begin(), result2_choices.end(), task) != result2_choices.end())
+					// TODO: Make erasure during loop safe
+					// perhaps write helper function?
+					result_list->erase(std::find(result_list->begin(), result_list->end(), task));
+			}
 			i++;
 		}
 		// return maximum reward
@@ -136,8 +147,8 @@ int dynamic_schedule(std::vector<Task> const & task_list, int time) {
 			}
 		}
 		rewards.at(i) = dynamic_schedule(task_list_copy, std::get<1>(tasks_and_time));
-		// TODO: incorporate total rewards of dependencies (in optimal order) using helper function
-		rewards.at(i) += task_list.at(i).reward;
+		// TODO: incorporate total rewards of dependencies (in optimal order) using maximize function
+		rewards.at(i) += task_list.at(i).taskreward;
 		
 	}
 	// return greatest reward
