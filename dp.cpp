@@ -67,7 +67,7 @@ std::tuple<int, int, std::vector<Task>> Task::maximize_dependency_reward(int tim
 	// determine intersection between task's own dependencies and tasks not already executed
 	std::vector<Task> task_list_intersect = {};
 	for (auto task : task_list) {
-		if (std::find(dependencies.begin(), dependencies.end(), task) != dependencies.end())
+		if (std::find_if(dependencies.begin(), dependencies.end(), [&task] (Task * dep) { return task == *dep; }) != dependencies.end())
 			task_list_intersect.push_back(task);
 	}
 	if (!(task_list_intersect.empty())) {
