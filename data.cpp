@@ -1,7 +1,6 @@
-#include <vector>
 #include "dp.h"
 
-void fixed_datasets() {
+std::vector<std::vector<Task>> fixed_datasets() {
 	std::vector<Task> D1_INDEPENDENT = {
 		{"A", 3, 8, 20, {}},
 		{"B", 2, 5, 25, {}},
@@ -110,4 +109,5 @@ void fixed_datasets() {
 		D7_IMPOSSIBLE_DEADLINES,
 		D8_MIXED_LARGE
 	};
+	return FIXED_DATASETS;
 }
