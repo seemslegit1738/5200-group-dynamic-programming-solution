@@ -84,7 +84,7 @@ std::tuple<int, int, std::vector<Task>> Task::maximize_dependency_reward(int tim
 				result = dep.maximize_dependency_reward(time + dep.duration, reward + dep.taskreward, task_list_copy);
 			else
 				result = dep.maximize_dependency_reward(time + dep.duration, reward, task_list_copy);
-			results.at(i) = result;
+			results.push_back(result);
 			// calculate value of other dependencies
 			std::vector<Task> task_list_copy2 = task_list_intersect;
 			task_list_copy.erase(std::find(task_list_copy.begin(), task_list_copy.end(), dep));
@@ -133,11 +133,14 @@ int dynamic_schedule(std::vector<Task> const & task_list, int time) {
 	std::vector<int> rewards = {};
 	std::vector<Task> task_list_copy = {};
 	// iterate through tasks, determining which can be chosen
+	if (task_list.empty()) {
+		return 0;
+	}
 	for (int i = 0; i < static_cast<int>(task_list.size()); i++) {
 		auto tasks_and_time = task_list.at(i).is_option(time, task_list);
 		if (std::get<1>(tasks_and_time) == -1) {
 			// do not remove ineligible task from the list, in case it is a dependency.
-			rewards.at(i) = -1;
+			rewards.push_back(0);
 			continue;
 		}
 		// create copy of task list, excluding options
@@ -148,7 +151,7 @@ int dynamic_schedule(std::vector<Task> const & task_list, int time) {
 					task_list_copy.push_back(task_list.at(j));
 			}
 		}
-		rewards.at(i) = dynamic_schedule(task_list_copy, std::get<1>(tasks_and_time));
+		rewards.push_back(dynamic_schedule(task_list_copy, std::get<1>(tasks_and_time)));
 		auto dep_results = task_list.at(i).maximize_dependency_reward(time, 0, task_list);
 		rewards.at(i) += task_list.at(i).taskreward + std::get<1>(dep_results);
 		
