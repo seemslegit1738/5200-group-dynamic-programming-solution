@@ -63,7 +63,7 @@ std::tuple<int, int, std::vector<Task>> Task::maximize_dependency_reward(int tim
 		if (std::find(dependencies.begin(), dependencies.end(), task) != dependencies.end())
 			task_list_intersect.push_back(task);
 	}
-	if (task_list_intersect.size() > 1) {
+	if (task_list_intersect.size() > 0) {
 		int total_time = time;
 		std::vector<std::tuple<int, int, std::vector<Task>>> results = {};
 		int i = 0;
@@ -110,19 +110,6 @@ std::tuple<int, int, std::vector<Task>> Task::maximize_dependency_reward(int tim
 		}
 		std::tuple<int, int, std::vector<Task>> args = {time, reward, std::get<2>(results.at(0))};
 		return {total_time, total_reward, std::get<2>(results.at(0))};
-
-	} else if (dependencies.size() == 1) {
-		Task dep = dependencies.at(0);
-		if (std::find(task_list_intersect.begin(), task_list_intersect.end(), dep) != task_list_intersect.end()) {
-			// remove singular dependency from task list
-			std::vector<Task> task_list_copy = task_list;
-			task_list_copy.erase(std::find(task_list_copy.begin(), task_list_copy.end(), dep));
-			if (std::get<1>(dep.is_option(time, task_list)) != -1) {
-				return {time + dep.duration, reward + dep.taskreward, task_list_copy};
-			} else {
-				return {time + dep.duration, reward, task_list_copy};
-			}
-		}
 	}
 	return {time, reward, task_list};
 }
