@@ -15,11 +15,6 @@ int main() {
 	};
 	int reward = 0;
 
-	reward = dynamic_schedule(FIXED_DATASETS.at(0), 0);
-	std::cout << "D1_INDEPENDENT: " << reward << "\n";
-
-	reward = dynamic_schedule(FIXED_DATASETS.at(0), 0);
-
 	for (int i = 0; i < static_cast<int>(sizeof(dataset_names) / sizeof(dataset_names[0])); i++) {
 		reward = dynamic_schedule(FIXED_DATASETS.at(i), 0);
 		std::cout << dataset_names[i] << ": " << reward << "\n";
