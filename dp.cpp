@@ -131,7 +131,6 @@ int dynamic_schedule(std::vector<Task> const & task_list, int time) {
 	// TODO: incorporate memo table
 
 	std::vector<int> rewards = {};
-	std::vector<Task> task_list_copy = {};
 	// iterate through tasks, determining which can be chosen
 	if (task_list.empty()) {
 		return 0;
@@ -144,6 +143,7 @@ int dynamic_schedule(std::vector<Task> const & task_list, int time) {
 			continue;
 		}
 		// create copy of task list, excluding options
+		std::vector<Task> task_list_copy = {};
 		// copying from task_list is necessary because is_option only returns a list of ids, not Task objects.
 		for (std::string id : std::get<0>(tasks_and_time)) {
 			for (int j = 0; j < static_cast<int>(task_list.size()); j++) {
