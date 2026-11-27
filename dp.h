@@ -33,4 +33,4 @@ class Task {
 // recursive, main dynamically programmed function
 int dynamic_schedule(std::vector<Task> const & task_list, int time);
 // returns list of fixed-value datasets
-std::vector<std::vector<Task>> fixed_datasets();
+std::vector<std::vector<Task>> & fixed_datasets();
