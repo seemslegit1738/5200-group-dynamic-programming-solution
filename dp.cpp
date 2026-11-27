@@ -1,49 +1,51 @@
 #include "dp.h"
 #include <algorithm>
 
-Task::Task(std::string taskid, int duration, int deadline, int reward, std::vector<Task*> dependencies)
-	: taskid(taskid), duration(duration), deadline(deadline), taskreward(reward), dependencies(dependencies) {}
+Task::Task(std::string taskid, int duration, int deadline, int reward)
+	: taskid(taskid), duration(duration), deadline(deadline), taskreward(reward) {}
 
 bool Task::operator==(const Task & n) const { return taskid == n.taskid; }
 
+void Task::add_dependency(Task* dependency) {
+	dependencies.push_back(dependency);
+}
+
 std::tuple<std::vector<std::string>, int> Task::time_helper(std::tuple<std::vector<std::string>, int> tasks_and_time) const {
 	// create pointers to task id list and current time value for better readability
-	std::vector<std::string>* task_id_list = &std::get<0>(tasks_and_time);
-	int* current_time = &std::get<1>(tasks_and_time);
+	std::vector<std::string>& task_id_list = std::get<0>(tasks_and_time);
+	int& current_time = std::get<1>(tasks_and_time);
 
 	// if task not in task list (already accounted for), do not add its duration to total time
-	if (std::find(task_id_list->begin(), task_id_list->end(), taskid) == task_id_list->end())
+	if (std::find(task_id_list.begin(), task_id_list.end(), taskid) == task_id_list.end())
 		return tasks_and_time;
-
-	std::tuple<std::vector<std::string>, int> temp_tasks_and_time;
-	std::vector<std::string>* temp_id_list = &std::get<0>(temp_tasks_and_time);
-	int* temp_time = &std::get<1>(temp_tasks_and_time);
 
 	// recursively iterate through all dependencies of current task.
 	for (auto& dependency : dependencies) {
-		temp_tasks_and_time = dependency->time_helper(tasks_and_time);
+		std::tuple<std::vector<std::string>, int> temp_tasks_and_time = dependency->time_helper(tasks_and_time);
+		std::vector<std::string>& temp_id_list = std::get<0>(temp_tasks_and_time);
+		int& temp_time = std::get<1>(temp_tasks_and_time);
 
 		// sync current task list with temporary task list from recursive call
-		int k = task_id_list->size();
+		int k = task_id_list.size();
 		for (int i = 0; i < k; i++) {
-			auto it = std::find(temp_id_list->begin(), temp_id_list->end(), task_id_list->at(i));
-			if (it == temp_id_list->end()) {
-				task_id_list->erase(task_id_list->begin() + i);
+			auto it = std::find(temp_id_list.begin(), temp_id_list.end(), task_id_list.at(i));
+			if (it == temp_id_list.end()) {
+				task_id_list.erase(task_id_list.begin() + i);
 				i--;
 				k--;
 			}
 		}
 
-		*current_time += *temp_time;
+		current_time += temp_time;
 	}
 	// update task list and time for current task
-	auto it = std::find(task_id_list->begin(), task_id_list->end(), taskid);
+	auto it = std::find(task_id_list.begin(), task_id_list.end(), taskid);
 	// ensure that the current task id exists in the list: if not, skip without adding its duration.
-	if (it != task_id_list->end())
-		task_id_list->erase(it);
+	if (it != task_id_list.end())
+		task_id_list.erase(it);
 	else
 		return tasks_and_time;
-	*current_time += duration;
+	current_time += duration;
 
 	return tasks_and_time;
 }

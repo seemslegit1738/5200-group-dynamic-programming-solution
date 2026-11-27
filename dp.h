@@ -14,10 +14,10 @@ class Task {
 		// ID unique to each task
 		std::string taskid;
 		int taskreward;
-		// TODO: create constructor definition
-		Task(std::string taskid, int duration, int deadline, int reward, std::vector<Task*> dependencies);
+		Task(std::string taskid, int duration, int deadline, int reward);
 		// == Helper function: determines when two tasks are equivalent (via unique ID)
 		bool operator==(const Task & n) const;
+		void add_dependency(Task* dependency);
 		/*
  			Determines whether or not a task can be chosen
 				- If the total duration of the task and its dependencies + the current time exceeds the deadline, is_option returns -1 and an empty task list.

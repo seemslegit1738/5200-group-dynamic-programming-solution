@@ -2,103 +2,101 @@
 
 std::vector<std::vector<Task>> fixed_datasets() {
 	std::vector<Task> D1_INDEPENDENT = {
-		{"A", 3, 8, 20, {}},
-		{"B", 2, 5, 25, {}},
-		{"C", 4, 10, 30, {}},
-		{"D", 1, 3, 15, {}},
-		{"E", 5, 12, 40, {}}
+		{"A", 3, 8, 20},
+		{"B", 2, 5, 25},
+		{"C", 4, 10, 30},
+		{"D", 1, 3, 15},
+		{"E", 5, 12, 40}
 	};
-	Task d2_chain_task1 = {"A", 2, 3, 15, {}};
-	Task d2_chain_task2 = {"B", 3, 7, 25, {&d2_chain_task1}};
-	Task d2_chain_task3 = {"C", 2, 9, 20, {&d2_chain_task2}};
-	Task d2_chain_task4 = {"D", 4, 14, 35, {&d2_chain_task3}};
-	Task d2_chain_task5 = {"E", 1, 15, 10, {&d2_chain_task4}};
+
 	std::vector<Task> D2_CHAIN = {
-		d2_chain_task1,
-		d2_chain_task2,
-		d2_chain_task3,
-		d2_chain_task4,
-		d2_chain_task5
+		{"A", 2, 3, 15},
+		{"B", 3, 7, 25},
+		{"C", 2, 9, 20},
+		{"D", 4, 14, 35},
+		{"E", 1, 15, 10}
 	};
-	Task d3_branching_task1 = {"A", 2, 4, 20, {}};
-	Task d3_branching_task2 = {"B", 3, 8, 30, {&d3_branching_task1}};
-	Task d3_branching_task3 = {"C", 2, 7, 25, {&d3_branching_task1}};
-	Task d3_branching_task4 = {"D", 2, 11, 35, {&d3_branching_task2, &d3_branching_task3}};
-	Task d3_branching_task5 = {"E", 3, 10, 20, {}};
-	Task d3_branching_task6 = {"F", 1, 13, 15, {&d3_branching_task4}};
+	D2_CHAIN.at(1).add_dependency(&D2_CHAIN.at(0));
+	D2_CHAIN.at(2).add_dependency(&D2_CHAIN.at(1));
+	D2_CHAIN.at(3).add_dependency(&D2_CHAIN.at(2));
+	D2_CHAIN.at(4).add_dependency(&D2_CHAIN.at(3));
+
 	std::vector<Task> D3_BRANCHING = {
-		d3_branching_task1,
-		d3_branching_task2,
-		d3_branching_task3,
-		d3_branching_task4,
-		d3_branching_task5,
-		d3_branching_task6
+		{"A", 2, 4, 20},
+		{"B", 3, 8, 30},
+		{"C", 2, 7, 25},
+		{"D", 2, 11, 35},
+		{"E", 3, 10, 20},
+		{"F", 1, 13, 15}
 	};
+	D3_BRANCHING.at(1).add_dependency(&D3_BRANCHING.at(0));
+	D3_BRANCHING.at(2).add_dependency(&D3_BRANCHING.at(0));
+	D3_BRANCHING.at(3).add_dependency(&D3_BRANCHING.at(1));
+	D3_BRANCHING.at(3).add_dependency(&D3_BRANCHING.at(2));
+	D3_BRANCHING.at(5).add_dependency(&D3_BRANCHING.at(3));
+
 	std::vector<Task> D4_GREEDY_CHALLENGE = {
-		{"A", 5, 5, 50, {}},
-		{"B", 2, 2, 24, {}},
-		{"C", 2, 4, 24, {}},
-		{"D", 2, 6, 22, {}},
-		{"E", 1, 7, 10, {}}
+		{"A", 5, 5, 50},
+		{"B", 2, 2, 24},
+		{"C", 2, 4, 24},
+		{"D", 2, 6, 22},
+		{"E", 1, 7, 10}
 	};
-	Task d5_task1 = {"A", 4, 2, 30, {}};
-	Task d5_task2 = {"B", 2, 7, 50, {&d5_task1}};
-	Task d5_task3 = {"C", 1, 8, 20, {&d5_task2}};
-	Task d5_task4 = {"D", 2, 4, 25, {}};
+
 	std::vector<Task> D5_LATE_PREREQUISITE = {
-		d5_task1,
-		d5_task2,
-		d5_task3,
-		d5_task4
+		{"A", 4, 2, 30},
+		{"B", 2, 7, 50},
+		{"C", 1, 8, 20},
+		{"D", 2, 4, 25}
 	};
-	Task d6_task1 = {"A", 2, 3, 20, {}};
-	Task d6_task2 = {"B", 3, 6, 45, {&d6_task1}};
-	Task d6_task3 = {"C", 1, 2, 15, {}};
-	Task d6_task4 = {"D", 2, 7, 30, {}};
-	Task d6_task5 = {"E", 2, 9, 35, {&d6_task2}};
-	Task d6_task6 = {"F", 1, 10, 15, {&d6_task4}};
+	D5_LATE_PREREQUISITE.at(1).add_dependency(&D5_LATE_PREREQUISITE.at(0));
+	D5_LATE_PREREQUISITE.at(2).add_dependency(&D5_LATE_PREREQUISITE.at(1));
+
 	std::vector<Task> D6_TIGHT_DEADLINES = {
-		d6_task1,
-		d6_task2,
-		d6_task3,
-		d6_task4,
-		d6_task5,
-		d6_task6
+		{"A", 2, 3, 20},
+		{"B", 3, 6, 45},
+		{"C", 1, 2, 15},
+		{"D", 2, 7, 30},
+		{"E", 2, 9, 35},
+		{"F", 1, 10, 15}
 	};
-	Task d7_task1 = {"A", 5, 2, 40, {}};
-	Task d7_task2 = {"B", 3, 4, 30, {&d7_task1}};
-	Task d7_task3 = {"C", 2, 3, 25, {}};
-	Task d7_task4 = {"D", 1, 10, 20, {&d7_task2}};
-	Task d7_task5 = {"E", 2, 12, 35, {&d7_task4}};
+	D6_TIGHT_DEADLINES.at(1).add_dependency(&D6_TIGHT_DEADLINES.at(0));
+	D6_TIGHT_DEADLINES.at(4).add_dependency(&D6_TIGHT_DEADLINES.at(1));
+	D6_TIGHT_DEADLINES.at(5).add_dependency(&D6_TIGHT_DEADLINES.at(3));
+
 	std::vector<Task> D7_IMPOSSIBLE_DEADLINES = {
-		d7_task1,
-		d7_task2,
-		d7_task3,
-		d7_task4,
-		d7_task5
+		{"A", 5, 2, 40},
+		{"B", 3, 4, 30},
+		{"C", 2, 3, 25},
+		{"D", 1, 10, 20},
+		{"E", 2, 12, 35}
 	};
-	Task d8_task1 = {"A", 2, 5, 20, {}};
-	Task d8_task2 = {"B", 3, 8, 35, {&d8_task1}};
-	Task d8_task3 = {"C", 1, 4, 15, {}};
-	Task d8_task4 = {"D", 4, 10, 40, {}};
-	Task d8_task5 = {"E", 2, 12, 30, {&d8_task2}};
-	Task d8_task6 = {"F", 3, 9, 25, {&d8_task3}};
-	Task d8_task7 = {"G", 2, 14, 35, {&d8_task4}};
-	Task d8_task8 = {"H", 1, 13, 20, {&d8_task5, &d8_task6}};
-	Task d8_task9 = {"I", 3, 16, 40, {&d8_task7}};
-	Task d8_task10 = {"J", 2, 18, 30, {&d8_task8, &d8_task9}};
+	D7_IMPOSSIBLE_DEADLINES.at(1).add_dependency(&D7_IMPOSSIBLE_DEADLINES.at(0));
+	D7_IMPOSSIBLE_DEADLINES.at(3).add_dependency(&D7_IMPOSSIBLE_DEADLINES.at(1));
+	D7_IMPOSSIBLE_DEADLINES.at(4).add_dependency(&D7_IMPOSSIBLE_DEADLINES.at(3));
+
 	std::vector<Task> D8_MIXED_LARGE = {
-		d8_task1,
-		d8_task2,
-		d8_task3,
-		d8_task4,
-		d8_task5,
-		d8_task6,
-		d8_task7,
-		d8_task8,
-		d8_task9,
-		d8_task10
+		{"A", 2, 5, 20},
+		{"B", 3, 8, 35},
+		{"C", 1, 4, 15},
+		{"D", 4, 10, 40},
+		{"E", 2, 12, 30},
+		{"F", 3, 9, 25},
+		{"G", 2, 14, 35},
+		{"H", 1, 13, 20},
+		{"I", 3, 16, 40},
+		{"J", 2, 18, 30}
 	};
+	D8_MIXED_LARGE.at(1).add_dependency(&D8_MIXED_LARGE.at(0));
+	D8_MIXED_LARGE.at(4).add_dependency(&D8_MIXED_LARGE.at(1));
+	D8_MIXED_LARGE.at(5).add_dependency(&D8_MIXED_LARGE.at(2));
+	D8_MIXED_LARGE.at(6).add_dependency(&D8_MIXED_LARGE.at(3));
+	D8_MIXED_LARGE.at(7).add_dependency(&D8_MIXED_LARGE.at(4));
+	D8_MIXED_LARGE.at(7).add_dependency(&D8_MIXED_LARGE.at(5));
+	D8_MIXED_LARGE.at(8).add_dependency(&D8_MIXED_LARGE.at(6));
+	D8_MIXED_LARGE.at(9).add_dependency(&D8_MIXED_LARGE.at(7));
+	D8_MIXED_LARGE.at(9).add_dependency(&D8_MIXED_LARGE.at(8));
+
 	std::vector<std::vector<Task>> FIXED_DATASETS = {
 		D1_INDEPENDENT,
 		D2_CHAIN,
