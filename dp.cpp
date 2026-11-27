@@ -20,7 +20,7 @@ std::tuple<std::vector<std::string>, int> Task::time_helper(std::tuple<std::vect
 	int* temp_time = &std::get<1>(temp_tasks_and_time);
 
 	// recursively iterate through all dependencies of current task.
-	for (auto dependency : dependencies) {
+	for (auto& dependency : dependencies) {
 		temp_tasks_and_time = dependency->time_helper(tasks_and_time);
 
 		// sync current task list with temporary task list from recursive call
@@ -66,7 +66,7 @@ std::tuple<std::vector<std::string>, int> Task::is_option(int time, std::vector<
 std::tuple<int, int, std::vector<Task>> Task::maximize_dependency_reward(int time, int reward, std::vector<Task> task_list) const {
 	// determine intersection between task's own dependencies and tasks not already executed
 	std::vector<Task> task_list_intersect = {};
-	for (auto task : task_list) {
+	for (auto& task : task_list) {
 		if (std::find_if(dependencies.begin(), dependencies.end(), [&task] (Task * dep) { return task == *dep; }) != dependencies.end())
 			task_list_intersect.push_back(task);
 	}
@@ -74,7 +74,7 @@ std::tuple<int, int, std::vector<Task>> Task::maximize_dependency_reward(int tim
 		int total_time = time;
 		std::vector<std::tuple<int, int, std::vector<Task>>> results = {};
 		int i = 0;
-		for (auto dep : task_list_intersect) {
+		for (auto& dep : task_list_intersect) {
 			// calculate value of current dependency when put first
 			std::vector<Task> task_list_copy = task_list;
 			task_list_copy.erase(std::find(task_list_copy.begin(), task_list_copy.end(), dep));
