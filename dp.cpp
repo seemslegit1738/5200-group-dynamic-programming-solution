@@ -96,7 +96,7 @@ std::tuple<int, int, std::vector<Task>> Task::maximize_dependency_reward(int tim
 			for (Task task : task_list_intersect) {
 				if (std::find(result_list->begin(), result_list->end(), task) == result_list->end()) {
 					auto it = std::find(task_list_copy2.begin(), task_list_copy2.end(), task);
-					if (it != task_list_copy.end())
+					if (it != task_list_copy2.end())
 						task_list_copy2.erase(it);
 				}
 			}
