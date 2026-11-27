@@ -89,13 +89,16 @@ std::tuple<int, int, std::vector<Task>> Task::maximize_dependency_reward(int tim
 			results.push_back(result);
 			// calculate value of other dependencies
 			std::vector<Task> task_list_copy2 = task_list_intersect;
-			task_list_copy.erase(std::find(task_list_copy.begin(), task_list_copy.end(), dep));
+			task_list_copy2.erase(std::find(task_list_copy2.begin(), task_list_copy2.end(), dep));
 			std::tuple<int, int, std::vector<Task>> result2;
 			std::vector<Task> *result_list = &std::get<2>(result);
-			// create intersection between dependency list and resulting list
+			// create intersection between dependency list and resulting list (to avoid processing the same task twice)
 			for (Task task : task_list_intersect) {
-				if (std::find(result_list->begin(), result_list->end(), task) == result_list->end())
-					task_list_copy2.erase(std::find(task_list_copy2.begin(), task_list_copy2.end(), task));
+				if (std::find(result_list->begin(), result_list->end(), task) == result_list->end()) {
+					auto it = std::find(task_list_copy2.begin(), task_list_copy2.end(), task);
+					if (it != task_list_copy.end())
+						task_list_copy2.erase(it);
+				}
 			}
 			result2 = maximize_dependency_reward(std::get<0>(result), std::get<1>(result), task_list_copy2);
 			// combine values
