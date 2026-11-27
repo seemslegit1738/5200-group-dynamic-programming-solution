@@ -65,6 +65,11 @@ std::tuple<std::vector<std::string>, int> Task::is_option(int time, std::vector<
 	return tasks_and_time;
 }
 
+/*
+	[0]: Time
+	[1]: Reward
+	[2]: Task List
+*/
 std::tuple<int, int, std::vector<Task>> Task::maximize_dependency_reward(int time, int reward, std::vector<Task> task_list) const {
 	// determine intersection between task's own dependencies and tasks not already executed
 	std::vector<Task> task_list_intersect = {};
@@ -91,10 +96,10 @@ std::tuple<int, int, std::vector<Task>> Task::maximize_dependency_reward(int tim
 			std::vector<Task> task_list_copy2 = task_list_intersect;
 			task_list_copy2.erase(std::find(task_list_copy2.begin(), task_list_copy2.end(), dep));
 			std::tuple<int, int, std::vector<Task>> result2;
-			std::vector<Task> *result_list = &std::get<2>(result);
+			std::vector<Task> &result_list = std::get<2>(result);
 			// create intersection between dependency list and resulting list (to avoid processing the same task twice)
 			for (Task task : task_list_intersect) {
-				if (std::find(result_list->begin(), result_list->end(), task) == result_list->end()) {
+				if (std::find(result_list.begin(), result_list.end(), task) == result_list.end()) {
 					auto it = std::find(task_list_copy2.begin(), task_list_copy2.end(), task);
 					if (it != task_list_copy2.end())
 						task_list_copy2.erase(it);
@@ -105,19 +110,20 @@ std::tuple<int, int, std::vector<Task>> Task::maximize_dependency_reward(int tim
 			std::get<0>(results.at(i)) += std::get<0>(result2);
 			std::get<1>(results.at(i)) += std::get<1>(result2);
 			std::vector<Task> result2_choices = {};
-			std::vector<Task> *result2_list = &std::get<2>(result2);
+			std::vector<Task> &result2_list = std::get<2>(result2);
 			for (Task task : task_list_copy2) {
-				if (std::find(result2_list->begin(), result2_list->end(), task) == result2_list->end())
+				if (std::find(result2_list.begin(), result2_list.end(), task) == result2_list.end())
 					result2_choices.push_back(task);
 			}
-			int k = result_list->size();
+			int k = result_list.size();
 			for (int j = 0; j < k; j++) {
-				if (std::find(result2_choices.begin(), result2_choices.end(), result_list->at(j)) != result2_choices.end()) {
-					result_list->erase(result_list->begin() + j);
+				if (std::find(result2_choices.begin(), result2_choices.end(), result_list.at(j)) != result2_choices.end()) {
+					result_list.erase(result_list.begin() + j);
 					j--;
 					k--;
 				}
 			}
+			std::get<2>(results.at(i)) = result_list;
 			i++;
 		}
 		// return maximum reward
@@ -150,14 +156,18 @@ int dynamic_schedule(std::vector<Task> const & task_list, int time) {
 		// create copy of task list, excluding options
 		std::vector<Task> task_list_copy = {};
 		// copying from task_list is necessary because is_option only returns a list of ids, not Task objects.
+		// TODO: Ensure that list of ids removes current task (task_list.at(i)) as well as all of its dependencies.
 		for (std::string id : std::get<0>(tasks_and_time)) {
 			for (int j = 0; j < static_cast<int>(task_list.size()); j++) {
 				if (task_list.at(j).taskid == id)
 					task_list_copy.push_back(task_list.at(j));
 			}
 		}
+		// removes self from copy of task list passed into maximize_dependency_reward()
+		std::vector<Task> task_list_copy_for_deps = task_list;
+		task_list_copy_for_deps.erase(task_list_copy_for_deps.begin() + i);
 		rewards.push_back(dynamic_schedule(task_list_copy, std::get<1>(tasks_and_time)));
-		auto dep_results = task_list.at(i).maximize_dependency_reward(time, 0, task_list);
+		auto dep_results = task_list.at(i).maximize_dependency_reward(time, 0, task_list_copy_for_deps);
 		rewards.at(i) += task_list.at(i).taskreward + std::get<1>(dep_results);
 		
 	}
