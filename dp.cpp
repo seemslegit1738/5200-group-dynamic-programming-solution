@@ -105,9 +105,10 @@ std::tuple<int, int, std::vector<Task>> Task::maximize_dependency_reward(int tim
 						task_list_copy2.erase(it);
 				}
 			}
-			result2 = maximize_dependency_reward(std::get<0>(result), std::get<1>(result), task_list_copy2);
+			result2 = maximize_dependency_reward(std::get<0>(result), 0, task_list_copy2);
 			// combine values
-			std::get<0>(results.at(i)) += std::get<0>(result2);
+			// total time will be equivalent to return value of result2, since previous total time was passed in as an argument
+			std::get<0>(results.at(i)) = std::get<0>(result2);
 			std::get<1>(results.at(i)) += std::get<1>(result2);
 			std::vector<Task> result2_choices = {};
 			std::vector<Task> &result2_list = std::get<2>(result2);
