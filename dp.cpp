@@ -183,8 +183,9 @@ int dynamic_schedule(std::vector<Task> const & task_list, int time) {
 		rewards.at(i) += task_list.at(i).taskreward + std::get<1>(dep_results);
 		
 	}
-	// return greatest reward
-	// TODO: Add state and reward to memo table
+	// return greatest reward + add entry to memo table
 	std::sort(rewards.begin(), rewards.end());
-	return rewards.at(rewards.size() - 1);
+	int& best_reward = rewards.at(rewards.size() - 1);
+	memo_table[memo_table_entry] = best_reward;
+	return best_reward;
 }
