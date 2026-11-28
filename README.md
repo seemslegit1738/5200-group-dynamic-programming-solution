@@ -4,7 +4,9 @@
   - [x] initial solution compiles
   - [x] debug until all fixed datasets are processed without crashing
   - [ ] ensure that all outputs from recursive solution are correct
-- [ ] add memo table, rebuild solution from table
+- [ ] add memo table and rebuild solution
+  - [x] implement memo table to avoid repeated operations
+  - [ ] store chosen tasks in order within rewards vector to include optimal schedule in solution
 - [x] translate test data to C++ and include file in main
   - [ ] Include instructions for adding custom test data
   - [ ] Translate to C++ the function for generating new test data
