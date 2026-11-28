@@ -15,6 +15,8 @@ Task::Task(std::string taskid, int duration, int deadline, int reward)
 
 bool Task::operator==(const Task & n) const { return taskid == n.taskid; }
 
+bool Task::operator<(const Task & n) const { return taskid < n.taskid; }
+
 void Task::add_dependency(Task* dependency) {
 	dependencies.push_back(dependency);
 }

@@ -17,6 +17,7 @@ class Task {
 		Task(std::string taskid, int duration, int deadline, int reward);
 		// == Helper function: determines when two tasks are equivalent (via unique ID)
 		bool operator==(const Task & n) const;
+		bool operator<(const Task & n) const;
 		void add_dependency(Task* dependency);
 		/*
  			Determines whether or not a task can be chosen
