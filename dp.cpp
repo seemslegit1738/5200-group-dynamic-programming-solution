@@ -1,5 +1,14 @@
 #include "dp.h"
 #include <algorithm>
+#include <map>
+
+// State: ts[t, l] = best choice of task at time t with current task choices l
+// Maps state to reward
+/*
+	State: <std::tuple<int, std::vector<Task>>
+	Reward: int
+*/
+std::map<std::tuple<int, std::vector<Task>>, int> memo_table = {};
 
 Task::Task(std::string taskid, int duration, int deadline, int reward)
 	: taskid(taskid), duration(duration), deadline(deadline), taskreward(reward) {}
@@ -107,7 +116,6 @@ std::tuple<int, int, std::vector<Task>> Task::maximize_dependency_reward(int tim
 			}
 			result2 = maximize_dependency_reward(std::get<0>(result), 0, task_list_copy2);
 			// combine values
-			// total time will be equivalent to return value of result2, since previous total time was passed in as an argument
 			std::get<0>(results.at(i)) = std::get<0>(result2);
 			std::get<1>(results.at(i)) += std::get<1>(result2);
 			std::vector<Task> result2_choices = {};
@@ -140,7 +148,10 @@ std::tuple<int, int, std::vector<Task>> Task::maximize_dependency_reward(int tim
 }
 
 int dynamic_schedule(std::vector<Task> const & task_list, int time) {
-	// TODO: incorporate memo table
+	// State: ts[t, l] = best choice of task at time t with current task choices l
+	std::tuple<int, std::vector<Task>> memo_table_entry = {time, task_list};
+	if (auto it = std::find(memo_table.begin(), memo_table.end(), memo_table_entry); it != memo_table.end())
+		return memo_table[memo_table_entry];
 
 	std::vector<int> rewards = {};
 	// iterate through tasks, determining which can be chosen
@@ -173,6 +184,7 @@ int dynamic_schedule(std::vector<Task> const & task_list, int time) {
 		
 	}
 	// return greatest reward
+	// TODO: Add state and reward to memo table
 	std::sort(rewards.begin(), rewards.end());
 	return rewards.at(rewards.size() - 1);
 }
