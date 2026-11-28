@@ -151,7 +151,7 @@ std::tuple<int, int, std::vector<Task>> Task::maximize_dependency_reward(int tim
 int dynamic_schedule(std::vector<Task> const & task_list, int time) {
 	// State: ts[t, l] = best choice of task at time t with current task choices l
 	std::tuple<int, std::vector<Task>> memo_table_entry = {time, task_list};
-	if (auto it = std::find(memo_table.begin(), memo_table.end(), memo_table_entry); it != memo_table.end())
+	if (auto it = memo_table.find(memo_table_entry); it != memo_table.end())
 		return memo_table[memo_table_entry];
 
 	std::vector<int> rewards = {};
