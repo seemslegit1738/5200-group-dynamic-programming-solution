@@ -3,12 +3,14 @@
 #include <map>
 
 // State: ts[t, l] = best choice of task at time t with current task choices l
-// Maps state to reward
+// Maps state to optimal list of tasks and reward
 /*
 	State: <std::tuple<int, std::vector<std::string>>
-	Reward: int
+	Value:
+		List of tasks (by id) in optimal order: std::vector<std::string>
+		Reward: int
 */
-std::map<std::tuple<int, std::vector<std::string>>, int> memo_table = {};
+std::map<std::tuple<int, std::vector<std::string>>, std::tuple<std::vector<std::string>, int>> memo_table = {};
 
 Task::Task(std::string taskid, int duration, int deadline, int reward)
 	: taskid(taskid), duration(duration), deadline(deadline), taskreward(reward) {}
@@ -79,8 +81,9 @@ std::tuple<std::vector<std::string>, int> Task::is_option(int time, std::vector<
 	[0]: Time
 	[1]: Reward
 	[2]: Task List
+	[3]: Chosen tasks in-order
 */
-std::tuple<int, int, std::vector<Task>> Task::maximize_dependency_reward(int time, int reward, std::vector<Task> task_list) const {
+std::tuple<int, int, std::vector<Task>, std::vector<std::string>> Task::maximize_dependency_reward(int time, int reward, std::vector<Task> task_list) const {
 	// determine intersection between task's own dependencies and tasks not already executed
 	std::vector<Task> task_list_intersect = {};
 	for (auto& task : task_list) {
@@ -89,23 +92,24 @@ std::tuple<int, int, std::vector<Task>> Task::maximize_dependency_reward(int tim
 	}
 	if (!(task_list_intersect.empty())) {
 		int total_time = time;
-		std::vector<std::tuple<int, int, std::vector<Task>>> results = {};
+		std::vector<std::tuple<int, int, std::vector<Task>, std::vector<std::string>>> results = {};
 		int i = 0;
 		for (auto& dep : task_list_intersect) {
 			// calculate value of current dependency when put first
 			std::vector<Task> task_list_copy = task_list;
 			task_list_copy.erase(std::find(task_list_copy.begin(), task_list_copy.end(), dep));
-			std::tuple<int, int, std::vector<Task>> result;
+			std::tuple<int, int, std::vector<Task>, std::vector<std::string>> result;
 			bool doigetreward = std::get<1>(dep.is_option(time, task_list)) != -1;
 			if (doigetreward)
 				result = dep.maximize_dependency_reward(time + dep.duration, reward + dep.taskreward, task_list_copy);
 			else
 				result = dep.maximize_dependency_reward(time + dep.duration, reward, task_list_copy);
 			results.push_back(result);
+			std::get<3>(results.at(i)).push_back(taskid);
 			// calculate value of other dependencies
 			std::vector<Task> task_list_copy2 = task_list_intersect;
 			task_list_copy2.erase(std::find(task_list_copy2.begin(), task_list_copy2.end(), dep));
-			std::tuple<int, int, std::vector<Task>> result2;
+			std::tuple<int, int, std::vector<Task>, std::vector<std::string>> result2;
 			std::vector<Task> &result_list = std::get<2>(result);
 			// create intersection between dependency list and resulting list (to avoid processing the same task twice)
 			for (Task task : task_list_intersect) {
@@ -134,6 +138,8 @@ std::tuple<int, int, std::vector<Task>> Task::maximize_dependency_reward(int tim
 				}
 			}
 			std::get<2>(results.at(i)) = result_list;
+			// append result2 task choice order to results vector
+			std::get<3>(results.at(i)).insert(std::get<3>(results.at(i)).end(), std::get<3>(result2).begin(), std::get<3>(result2).end());
 			i++;
 		}
 		// return maximum reward
@@ -143,14 +149,18 @@ std::tuple<int, int, std::vector<Task>> Task::maximize_dependency_reward(int tim
 		total_time += std::get<0>(results.at(0));
 		// create tuple of passed-in function args
 		// all elements of results should contain the same list, as all solutions will execute all dependencies.
-		return {total_time, total_reward, std::get<2>(results.at(0))};
+		return {total_time, total_reward, std::get<2>(results.at(0)), std::get<3>(results.at(results.size() - 1))};
 	}
-	return {time, reward, task_list};
+	return {time, reward, task_list, {taskid}};
 }
 
 void clear_memo_table() { memo_table.clear(); }
 
-int dynamic_schedule(std::vector<Task> const & task_list, int time) {
+/*
+	[0]: Task ids of chosen tasks (in order)
+	[1]: total reward
+*/
+std::tuple<std::vector<std::string>, int> dynamic_schedule(std::vector<Task> const & task_list, int time) {
 	// State: ts[t, l] = best choice of task at time t with current task choices l
 	std::vector<std::string> task_list_taskids = {};
 	for (Task task : task_list) {
@@ -160,16 +170,16 @@ int dynamic_schedule(std::vector<Task> const & task_list, int time) {
 	if (auto it = memo_table.find(memo_table_entry); it != memo_table.end())
 		return memo_table[memo_table_entry];
 
-	std::vector<int> rewards = {};
+	std::vector<std::tuple<std::vector<std::string>, int>> rewards = {};
 	// iterate through tasks, determining which can be chosen
 	if (task_list.empty()) {
-		return 0;
+		return {{}, 0};
 	}
 	for (int i = 0; i < static_cast<int>(task_list.size()); i++) {
 		auto tasks_and_time = task_list.at(i).is_option(time, task_list);
 		if (std::get<1>(tasks_and_time) == -1) {
 			// do not remove ineligible task from the list, in case it is a dependency.
-			rewards.push_back(0);
+			rewards.push_back({{}, 0});
 			continue;
 		}
 		// create copy of task list, excluding options
@@ -185,13 +195,17 @@ int dynamic_schedule(std::vector<Task> const & task_list, int time) {
 		std::vector<Task> task_list_copy_for_deps = task_list;
 		task_list_copy_for_deps.erase(task_list_copy_for_deps.begin() + i);
 		auto dep_results = task_list.at(i).maximize_dependency_reward(time, 0, task_list_copy_for_deps);
-		rewards.push_back(task_list.at(i).taskreward + std::get<1>(dep_results));
-		rewards.at(i) += dynamic_schedule(task_list_copy, std::get<1>(tasks_and_time));
+		rewards.push_back({std::get<3>(dep_results), task_list.at(i).taskreward + std::get<1>(dep_results)});
+		// TODO: combine task order from dynamic schedule and reward into rewards vector as pos i
+		auto dynamic_result = dynamic_schedule(task_list_copy, std::get<1>(tasks_and_time));
+		// insert list of chosen tasks from recursive call at end of chosen tasks from dependency order
+		std::get<0>(rewards.at(i)).insert(std::get<0>(rewards.at(i)).end(), std::get<0>(dynamic_result).begin(), std::get<0>(dynamic_result).end());
+		std::get<1>(rewards.at(i)) += std::get<1>(dynamic_result);
 		
 	}
 	// return greatest reward + add entry to memo table
-	std::sort(rewards.begin(), rewards.end());
-	int& best_reward = rewards.at(rewards.size() - 1);
+	std::sort(rewards.begin(), rewards.end(), [](const auto &a, const auto &b) { return std::get<1>(a) < std::get<1>(b); });
+	auto& best_reward = rewards.at(rewards.size() - 1);
 	memo_table[memo_table_entry] = best_reward;
 	return best_reward;
 }

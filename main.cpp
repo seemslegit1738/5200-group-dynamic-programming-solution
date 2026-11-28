@@ -1,6 +1,20 @@
 #include <iostream>
 #include "dp.h"
 
+void print_results(std::tuple<std::vector<std::string>, int> reward, std::string dataset_name) {
+	std::cout << "\n" << dataset_name << ":\n";
+
+	std::vector<std::string>& task_id_list = std::get<0>(reward);
+	int& total_reward = std::get<1>(reward);
+
+	std::cout << "\nList of tasks (in order): ";
+	for (std::string id : task_id_list) {
+		std::cout << id << " ";
+	}
+
+	std::cout << "\nTotal reward: " << total_reward << std::endl;
+}
+
 int main() {
 	// initialize fixed datasets
 	std::vector<Task> D1_INDEPENDENT = {
@@ -120,11 +134,11 @@ int main() {
 		"D7_IMPOSSIBLE_DEADLINES",
 		"D8_MIXED_LARGE"
 	};
-	int reward = 0;
+	std::tuple<std::vector<std::string>, int> reward = {{}, 0};
 
 	for (int i = 0; i < static_cast<int>(sizeof(dataset_names) / sizeof(dataset_names[0])); i++) {
 		reward = dynamic_schedule(FIXED_DATASETS.at(i), 0);
-		std::cout << dataset_names[i] << ": " << reward << "\n";
+		print_results(reward, dataset_names[i]);
 		clear_memo_table();
 	}
 
