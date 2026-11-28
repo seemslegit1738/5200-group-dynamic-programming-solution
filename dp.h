@@ -31,5 +31,8 @@ class Task {
 		std::tuple<int, int, std::vector<Task>> maximize_dependency_reward(int time, int reward, std::vector<Task> task_list) const;
 };
 
+// clear the memo table before dynamically evaluating separate schedule
+void clear_memo_table();
+
 // recursive, main dynamically programmed function
 int dynamic_schedule(std::vector<Task> const & task_list, int time);

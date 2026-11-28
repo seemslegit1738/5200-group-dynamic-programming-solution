@@ -125,6 +125,7 @@ int main() {
 	for (int i = 0; i < static_cast<int>(sizeof(dataset_names) / sizeof(dataset_names[0])); i++) {
 		reward = dynamic_schedule(FIXED_DATASETS.at(i), 0);
 		std::cout << dataset_names[i] << ": " << reward << "\n";
+		clear_memo_table();
 	}
 
 	return 0;

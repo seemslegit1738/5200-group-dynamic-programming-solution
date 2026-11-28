@@ -148,6 +148,8 @@ std::tuple<int, int, std::vector<Task>> Task::maximize_dependency_reward(int tim
 	return {time, reward, task_list};
 }
 
+void clear_memo_table() { memo_table.clear(); }
+
 int dynamic_schedule(std::vector<Task> const & task_list, int time) {
 	// State: ts[t, l] = best choice of task at time t with current task choices l
 	std::vector<std::string> task_list_taskids = {};
