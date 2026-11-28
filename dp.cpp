@@ -173,13 +173,13 @@ std::tuple<std::vector<std::string>, int> dynamic_schedule(std::vector<Task> con
 	std::vector<std::tuple<std::vector<std::string>, int>> rewards = {};
 	// iterate through tasks, determining which can be chosen
 	if (task_list.empty()) {
-		return {{}, 0};
+		return {std::vector<std::string>{}, 0};
 	}
 	for (int i = 0; i < static_cast<int>(task_list.size()); i++) {
 		auto tasks_and_time = task_list.at(i).is_option(time, task_list);
 		if (std::get<1>(tasks_and_time) == -1) {
 			// do not remove ineligible task from the list, in case it is a dependency.
-			rewards.push_back({{}, 0});
+			rewards.push_back({std::vector<std::string>{}, 0});
 			continue;
 		}
 		// create copy of task list, excluding options

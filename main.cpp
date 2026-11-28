@@ -134,7 +134,7 @@ int main() {
 		"D7_IMPOSSIBLE_DEADLINES",
 		"D8_MIXED_LARGE"
 	};
-	std::tuple<std::vector<std::string>, int> reward = {{}, 0};
+	std::tuple<std::vector<std::string>, int> reward = {std::vector<std::string>{}, 0};
 
 	for (int i = 0; i < static_cast<int>(sizeof(dataset_names) / sizeof(dataset_names[0])); i++) {
 		reward = dynamic_schedule(FIXED_DATASETS.at(i), 0);
