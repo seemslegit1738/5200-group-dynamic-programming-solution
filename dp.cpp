@@ -5,17 +5,15 @@
 // State: ts[t, l] = best choice of task at time t with current task choices l
 // Maps state to reward
 /*
-	State: <std::tuple<int, std::vector<Task>>
+	State: <std::tuple<int, std::vector<std::string>>
 	Reward: int
 */
-std::map<std::tuple<int, std::vector<Task>>, int> memo_table = {};
+std::map<std::tuple<int, std::vector<std::string>>, int> memo_table = {};
 
 Task::Task(std::string taskid, int duration, int deadline, int reward)
 	: taskid(taskid), duration(duration), deadline(deadline), taskreward(reward) {}
 
 bool Task::operator==(const Task & n) const { return taskid == n.taskid; }
-
-bool Task::operator<(const Task & n) const { return taskid < n.taskid; }
 
 void Task::add_dependency(Task* dependency) {
 	dependencies.push_back(dependency);
@@ -152,7 +150,11 @@ std::tuple<int, int, std::vector<Task>> Task::maximize_dependency_reward(int tim
 
 int dynamic_schedule(std::vector<Task> const & task_list, int time) {
 	// State: ts[t, l] = best choice of task at time t with current task choices l
-	std::tuple<int, std::vector<Task>> memo_table_entry = {time, task_list};
+	std::vector<std::string> task_list_taskids = {};
+	for (Task task : task_list) {
+		task_list_taskids.push_back(task.taskid);
+	}
+	std::tuple<int, std::vector<std::string>> memo_table_entry = {time, task_list_taskids};
 	if (auto it = memo_table.find(memo_table_entry); it != memo_table.end())
 		return memo_table[memo_table_entry];
 
