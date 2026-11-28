@@ -50,6 +50,7 @@ std::tuple<std::vector<std::string>, int> Task::time_helper(std::tuple<std::vect
 	// update task list and time for current task
 	auto it = std::find(task_id_list.begin(), task_id_list.end(), taskid);
 	// ensure that the current task id exists in the list: if not, skip without adding its duration.
+	// if it exists, remove it
 	if (it != task_id_list.end())
 		task_id_list.erase(it);
 	else
@@ -168,7 +169,6 @@ int dynamic_schedule(std::vector<Task> const & task_list, int time) {
 		// create copy of task list, excluding options
 		std::vector<Task> task_list_copy = {};
 		// copying from task_list is necessary because is_option only returns a list of ids, not Task objects.
-		// TODO: Ensure that list of ids removes current task (task_list.at(i)) as well as all of its dependencies.
 		for (std::string id : std::get<0>(tasks_and_time)) {
 			for (int j = 0; j < static_cast<int>(task_list.size()); j++) {
 				if (task_list.at(j).taskid == id)
@@ -178,9 +178,9 @@ int dynamic_schedule(std::vector<Task> const & task_list, int time) {
 		// removes self from copy of task list passed into maximize_dependency_reward()
 		std::vector<Task> task_list_copy_for_deps = task_list;
 		task_list_copy_for_deps.erase(task_list_copy_for_deps.begin() + i);
-		rewards.push_back(dynamic_schedule(task_list_copy, std::get<1>(tasks_and_time)));
 		auto dep_results = task_list.at(i).maximize_dependency_reward(time, 0, task_list_copy_for_deps);
-		rewards.at(i) += task_list.at(i).taskreward + std::get<1>(dep_results);
+		rewards.push_back(task_list.at(i).taskreward + std::get<1>(dep_results));
+		rewards.at(i) += dynamic_schedule(task_list_copy, std::get<1>(tasks_and_time));
 		
 	}
 	// return greatest reward + add entry to memo table
